@@ -2,27 +2,25 @@
     Build the deep network for drone direction determination.
     This is based on https://arxiv.org/pdf/1705.02550.pd
 
-    todo #1 downsampling at residual block
-    todo #2 change relu to shifted relu
-    todo #3 output layers
-    todo #4 data pre-processing
+    todo data pre-processing
 '''
 
 from keras.models import Model
-from keras.layers import Dense, Conv2D, Input, Activation, MaxPool2D, Flatten
+from keras.layers import Dense, Conv2D, Input, MaxPool2D, Flatten, AveragePooling2D
 from keras.layers.merge import add
+from keras_contrib.layers.advanced_activations import SReLU
 
 
 def convRelu(filters, kernel_size, strides, padding='same'):
     def func(input):
         convolution = Conv2D(filters=filters, kernel_size=kernel_size,
                              strides=strides, padding=padding)(input)
-        return Activation('relu')(convolution)
+        return SReLU()(convolution)
 
     return func
 
 
-# Convolution->SReLU->Convolution, both convolution are 3*3 with stride of 1
+# Convolution->SReLU()->Convolution, both convolution are 3*3 with stride of 1
 def blockFunc(filters, kernel_size, strides, padding='same'):
     def func(input):
         conv_1 = convRelu(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding)(input)
@@ -40,14 +38,16 @@ def resBlock(filters, strides, isFirstBlock=False):
     def single_block(input):
         conv_1 = blockFunc(filters=filters, kernel_size=(3, 3), strides=1)(input)
         res = shortcut(input, conv_1)
-        return Activation('relu')(res)
+        return SReLU()(res)
 
     def func(input):
         if isFirstBlock:
             return single_block(single_block(input))
 
-        block = blockFunc(filters=filters, kernel_size=(3, 3), strides=strides)(input)
-        block = Activation('relu')(block)
+        #downsampling first
+        block = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(input)
+        block = blockFunc(filters=filters, kernel_size=(3, 3), strides=strides)(block)
+        block = SReLU()(block)
         return single_block(block)
 
     return func
@@ -70,18 +70,16 @@ def buildNetwork(input_shape):
         block = resBlock(filters=filters, strides=1, isFirstBlock=(i == 0))(block)
         filters *= 2
 
-    flatten1 = Flatten()(block)
-    dense = Dense(units=512, kernel_initializer="he_normal",
-                  activation="softmax")(flatten1)
+    average_pooling = AveragePooling2D(pool_size=(9, 5), strides=None)(block)
 
+    flatten1 = Flatten()(average_pooling)
+    dense = Dense(6)(flatten1)
     return Model(inputs=input, outputs=dense)
 
 
 def test():
     model = buildNetwork((320, 180, 3))
-    for layer in model.layers:
-        print(type(layer))
-        print(layer.output_shape)
+    print(model.summary())
 
 
 test()
