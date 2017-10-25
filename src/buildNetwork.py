@@ -76,10 +76,16 @@ def buildNetwork(input_shape):
     dense = Dense(6)(flatten1)
     return Model(inputs=input, outputs=dense)
 
+def saveVisualizedModel(model):
+    from keras.utils import plot_model
+    plot_model(model, to_file='model.png')
 
 def test():
     model = buildNetwork((320, 180, 3))
     print(model.summary())
-
+    #saveVisualizedModel(model)
+    yaml = model.to_yaml()
+    print(yaml)
 
 test()
+
