@@ -3,7 +3,7 @@ import numpy as np
 from scipy import ndimage
 from sklearn.preprocessing import StandardScaler
 
-def loadRecord(filepath):
+def loadRecord(filepath, col_selection):
 	result = {}
 	with open(filepath, 'r') as file:
 		for line in file:
@@ -12,9 +12,9 @@ def loadRecord(filepath):
 			for i in range(len(splited_str)):
 				if i == 8:
 					continue
-				elif i == 0:
+				elif i == 0 and i in col_selection:
 					row.append(int(splited_str[i]))
-				else:
+				elif i in col_selection:
 					row.append(float(splited_str[i]))
 			result[splited_str[8].strip()] = row
 	return result
@@ -37,7 +37,7 @@ def loadData(data_path):
 	try:
 		if data_path[-1]!='/':
 			data_path+='/'
-		records = loadRecord(data_path+'airsim_rec.txt')
+		records = loadRecord(data_path+'airsim_rec.txt', [1,2,3,4, 5, 6, 7])
 		return loadImages(data_path+'images', records)
 	except Exception as e:
 		print(e)
