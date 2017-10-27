@@ -9,7 +9,7 @@ from keras.models import Model
 from keras.layers import Dense, Conv2D, Input, MaxPool2D, Flatten, AveragePooling2D
 from keras.layers.merge import add
 from keras_contrib.layers.advanced_activations import SReLU
-
+from keras import backend
 
 def convRelu(filters, kernel_size, strides, padding='same'):
     def func(input):
@@ -30,6 +30,14 @@ def blockFunc(filters, kernel_size, strides, padding='same'):
 
 
 def shortcut(input, residual):
+    residual_shape = backend.int_shape(residual)
+    input_shape = backend.int_shape(input)
+
+    if input_shape[3]!=residual_shape[3]:
+        stride_width = int(round(input_shape[1] / residual_shape[1]))
+        stride_height = int(round(input_shape[2] / residual_shape[2]))
+        input = Conv2D(filters=residual_shape[3], kernel_size=(1, 1), strides=(stride_width, stride_height), padding="valid")(input)
+
     return add([input, residual])
 
 
@@ -46,9 +54,8 @@ def resBlock(filters, strides, isFirstBlock=False):
 
         #downsampling first
         block = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(input)
-        block = blockFunc(filters=filters, kernel_size=(3, 3), strides=strides)(block)
-        block = SReLU()(block)
-        return single_block(block)
+        block = single_block(single_block(block))
+        return block
 
     return func
 
@@ -67,25 +74,25 @@ def buildNetwork(input_shape):
     # resNet
     filters = 64
     for i in range(4):
-        block = resBlock(filters=filters, strides=1, isFirstBlock=(i == 0))(block)
+        block = resBlock(filters=filters, strides=(1, 1), isFirstBlock=(i == 0))(block)
         filters *= 2
 
     average_pooling = AveragePooling2D(pool_size=(9, 5), strides=None)(block)
 
     flatten1 = Flatten()(average_pooling)
-    dense = Dense(6)(flatten1)
+    dense = Dense(7)(flatten1)
     return Model(inputs=input, outputs=dense)
 
 def saveVisualizedModel(model):
     from keras.utils import plot_model
-    plot_model(model, to_file='model.png')
+    plot_model(model, to_file='model.png', show_shapes=True)
 
 def test():
     model = buildNetwork((320, 180, 3))
     print(model.summary())
-    #saveVisualizedModel(model)
+    saveVisualizedModel(model)
     yaml = model.to_yaml()
-    print(yaml)
+    #print(yaml)
 
 test()
 
