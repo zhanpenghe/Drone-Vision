@@ -60,7 +60,7 @@ def resBlock(filters, strides, isFirstBlock=False):
     return func
 
 
-def buildNetwork(input_shape):
+def buildNetwork(input_shape, output_shape):
     # Check input shape dimension
     if len(input_shape) != 3:
         raise Exception('Input shape is not correct! (nb_rows, nb_cols, nb_channels)')
@@ -77,22 +77,23 @@ def buildNetwork(input_shape):
         block = resBlock(filters=filters, strides=(1, 1), isFirstBlock=(i == 0))(block)
         filters *= 2
 
-    average_pooling = AveragePooling2D(pool_size=(9, 5), strides=None)(block)
+    block_shape = backend.int_shape(block)
+    average_pooling = AveragePooling2D(pool_size=(block_shape[1], block_shape[2]), strides=None)(block)
 
     flatten1 = Flatten()(average_pooling)
-    dense = Dense(7)(flatten1)
+    dense = Dense(output_shape)(flatten1)
     return Model(inputs=input, outputs=dense)
 
-def saveVisualizedModel(model):
+def saveVisualizedModel(model, filepath):
     from keras.utils import plot_model
-    plot_model(model, to_file='model.png', show_shapes=True)
+    plot_model(model, to_file=filepath, show_shapes=True)
 
 def test():
     model = buildNetwork((320, 180, 3))
     print(model.summary())
-    saveVisualizedModel(model)
+    #saveVisualizedModel(model)
     yaml = model.to_yaml()
     #print(yaml)
 
-test()
+#test()
 
