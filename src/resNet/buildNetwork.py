@@ -1,12 +1,10 @@
 '''
     Build the deep network for drone direction determination.
     This is based on https://arxiv.org/pdf/1705.02550.pd
-
-    todo data pre-processing
 '''
 
 from keras.models import Model
-from keras.layers import Dense, Conv2D, Input, MaxPool2D, Flatten, AveragePooling2D
+from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, AveragePooling2D, Activation
 from keras.layers.merge import add
 from keras_contrib.layers.advanced_activations import SReLU
 from keras import backend
@@ -53,7 +51,7 @@ def resBlock(filters, strides, isFirstBlock=False):
             return single_block(single_block(input))
 
         #downsampling first
-        block = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(input)
+        block = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(input)
         block = single_block(single_block(block))
         return block
 
@@ -67,7 +65,7 @@ def buildNetwork(input_shape, output_shape):
 
     # input->conv->relu->max_pooling
     input = Input(shape=input_shape)
-    conv1_pooling = MaxPool2D(pool_size=(3, 3), strides=(2, 2))(
+    conv1_pooling = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(
         (convRelu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)))
 
     block = conv1_pooling
@@ -81,8 +79,15 @@ def buildNetwork(input_shape, output_shape):
     average_pooling = AveragePooling2D(pool_size=(block_shape[1], block_shape[2]), strides=None)(block)
 
     flatten1 = Flatten()(average_pooling)
-    dense = Dense(output_shape)(flatten1)
-    return Model(inputs=input, outputs=dense)
+    dense = Dense(256)(flatten1)
+    dense = Activation('softmax')(dense)
+    dense = Dense(128)(dense)
+    dense = Activation('softmax')(dense)
+    dense = Dense(64)(dense)
+    dense = Activation('softmax')(dense)
+    dense = Dense(output_shape)(dense)
+    output = Activation('softmax')(dense)
+    return Model(inputs=input, outputs=output)
 
 def saveVisualizedModel(model, filepath):
     from keras.utils import plot_model

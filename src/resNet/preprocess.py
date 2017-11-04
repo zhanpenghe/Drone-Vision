@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from scipy import ndimage
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 def loadRecord(filepath, col_selection):
 	result = {}
@@ -37,13 +37,13 @@ def loadData(data_path):
 	try:
 		if data_path[-1]!='/':
 			data_path+='/'
-		records = loadRecord(data_path+'airsim_rec.txt', [1,2,3,4, 5, 6, 7])
+		records = loadRecord(data_path+'airsim_rec.txt', [4, 5])
 		return loadImages(data_path+'images', records)
 	except Exception as e:
 		print(e)
 
 def preprocess_y(y_train, y_test):
-	scaler = StandardScaler()
+	scaler = MinMaxScaler()
 	y_train = scaler.fit_transform(y_train)
 	y_test = scaler.transform(y_test)
 	return y_train, y_test, scaler

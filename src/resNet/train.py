@@ -27,9 +27,9 @@ def run():
 	input_shape = (X.shape[1], X.shape[2], X.shape[3])
 	output_shape = y.shape[1]
 	nn = buildNetwork(input_shape, output_shape)
-	nn.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics = ['accuracy'])
+	nn.compile(optimizer = 'adam', loss = 'mean_absolute_error')
 	print('[INFO] Finish building neural network. Start training now.')
-	nn.fit(X_train, y_train, batch_size=10, epochs=100)
+	nn.fit(X_train, y_train, validation_data=(X_test,y_test), batch_size=10, epochs=100)
 	save_model(nn, scaler, '../model')
 
 run()
