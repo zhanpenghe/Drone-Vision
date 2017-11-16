@@ -4,7 +4,6 @@ from resNet.buildNetwork import buildNetwork
 from collections import deque
 
 
-
 class DeepQNetwork(object):
 
     def __init__(self,

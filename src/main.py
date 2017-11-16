@@ -1,4 +1,4 @@
-from environment import Environment
+from environment import DroneEnv as Env
 from reinforcement_learning import DeepQNetwork
 
 
@@ -17,7 +17,7 @@ def run_rl(env, rl):
 
 
 def main():
-    env = Environment()
+    env = Env()
     RL = DeepQNetwork(n_actions=100,
                       learning_rate=0.01,
                       reward_decay=0.9,
