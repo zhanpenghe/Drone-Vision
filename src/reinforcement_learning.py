@@ -62,10 +62,3 @@ class DeepQNetwork(object):
         if len(self.memory) > self.batch_size:
             X_batch, y_batch = self.creat_batch()
             self.model.train_on_batch(X_batch, y_batch)
-
-
-
-
-
-
-
