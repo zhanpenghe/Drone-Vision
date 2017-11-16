@@ -32,7 +32,7 @@ def loadImages(img_dir_path, records):
 	return np.array(X), np.array(y)
 
 
-#load images and records to X, a vector of images, and y, a vector of records
+# load images and records to X, a vector of images, and y, a vector of records
 def loadData(data_path):
 	try:
 		if data_path[-1]!='/':
